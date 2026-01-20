@@ -16,7 +16,6 @@ from project.db.models.task import Task, TaskStatus
 from project.db.models.user import Role, User
 from project.security import encrypt_password
 
-
 # =============================================================================
 # UNIT TEST FIXTURES (no database, mocks only)
 # =============================================================================

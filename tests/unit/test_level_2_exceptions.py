@@ -63,18 +63,18 @@ class TestLevel2:
         # limit must be > 0
         with pytest.raises(PydanticValidationError):
             PaginationParams(limit=0)
-        
+
         # limit must be <= 100
         with pytest.raises(PydanticValidationError):
             PaginationParams(limit=101)
-        
+
         # offset must be >= 0
         with pytest.raises(PydanticValidationError) as exc_info:
             PaginationParams(offset=-1)
-        
+
         errors = exc_info.value.errors()
         assert errors[0]["loc"] == ("offset",)
-        
+
         # boundary values should work
         valid_min = PaginationParams(limit=1, offset=0)
         valid_max = PaginationParams(limit=100, offset=1000)
@@ -98,7 +98,7 @@ class TestLevel2:
                 DB_URL="",
                 DB_TYPE="sqlite",
             )
-        
+
         # negative token expiry should fail
         with pytest.raises(ValueError):
             Settings(
@@ -129,7 +129,7 @@ class TestLevel2:
         # exception has expected attributes for error handling
         assert exc_info.value.entity_type == "Task"
         assert exc_info.value.identifier == "nonexistent-uuid"
-        
+
         # exception is catchable by parent class
         try:
             lookup_task("another-uuid")
@@ -150,7 +150,7 @@ class TestLevel2:
         # default message is generic
         error = AuthenticationError()
         assert error.message == "Authentication failed"
-        
+
         # custom message can be set when needed
         custom = AuthenticationError("Session expired")
         assert custom.message == "Session expired"

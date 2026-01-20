@@ -12,7 +12,7 @@ Run these tests:
 
 import pytest
 
-from project.db.models.task import TaskCreate, TaskResponse, TaskStatus
+from project.db.models.task import TaskCreate, TaskStatus
 from project.db.models.user import Role, UserResponse
 from project.exceptions import EntityNotFoundError
 from project.security import encrypt_password, verify_password
@@ -46,7 +46,7 @@ class TestLevel1:
 
         # required field is set
         assert task.title == "Fix login bug"
-        
+
         # optional fields have sensible defaults
         assert task.description is None
         assert task.status == TaskStatus.TODO
@@ -66,25 +66,25 @@ class TestLevel1:
         - Original password can be verified against hash
         """
         password = "secretPassword123"
-        
+
         # encrypt twice
         hash1 = encrypt_password(password)
         hash2 = encrypt_password(password)
-        
+
         # hashes differ from input
         assert hash1 != password
         assert hash2 != password
-        
+
         # hashes differ from each other (salted)
         assert hash1 != hash2
-        
+
         # but both verify correctly
         assert verify_password(password, hash1) is True
         assert verify_password(password, hash2) is True
         assert verify_password("wrongpassword", hash1) is False
 
     # =========================================================================
-    # TEST 3: ORM to Response Schema Conversion  
+    # TEST 3: ORM to Response Schema Conversion
     # WHY: Ensures model_validate works with your ORM objects
     # =========================================================================
     def test_response_schema_from_orm_object(self, sample_user):
@@ -121,11 +121,11 @@ class TestLevel1:
         # message contains entity type and identifier
         assert "User" in error.message
         assert "john@example.com" in error.message
-        
+
         # attributes are accessible for error handlers
         assert error.entity_type == "User"
         assert error.identifier == "john@example.com"
-        
+
         # context dict available for structured logging
         assert error.context["entity_type"] == "User"
         assert error.context["identifier"] == "john@example.com"
@@ -146,7 +146,7 @@ class TestLevel1:
         assert TaskStatus.TODO.value == "todo"
         assert TaskStatus.IN_PROGRESS.value == "in_progress"
         assert TaskStatus.DONE.value == "done"
-        
+
         # role values (used in JWT and auth checks)
         assert Role.ADMIN.value == "admin"
         assert Role.USER.value == "user"

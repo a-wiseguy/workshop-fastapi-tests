@@ -16,11 +16,9 @@ Run these tests:
 import pytest
 from pydantic import ValidationError as PydanticValidationError
 
-from project.config import Settings
 from project.db.models.task import TaskCreate
-from project.exceptions import AuthenticationError, AuthorizationError, EntityNotFoundError, ValidationError
+from project.exceptions import EntityNotFoundError
 from project.utils.pagination import PaginationParams
-
 
 # =============================================================================
 # EXAMPLE TESTS - Study these patterns

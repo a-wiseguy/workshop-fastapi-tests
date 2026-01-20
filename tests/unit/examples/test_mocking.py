@@ -14,18 +14,16 @@ Run these tests:
     pytest -k level_3 -v
 """
 
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import pytest
 
-from project.db.models.task import Task, TaskStatus
-from project.db.models.user import Role, User
+from project.db.models.task import Task
+from project.db.models.user import User
 from project.exceptions import EntityNotFoundError
 from project.security import TokenPayload, create_access_token, verify_password
 from project.utils.pagination import PaginatedData, PaginationParams
-
 
 # =============================================================================
 # EXAMPLE TESTS - Study these patterns

@@ -15,18 +15,13 @@ Run these tests:
 
 import pytest
 
-from project.db.models.task import TaskCreate, TaskResponse, TaskStatus
-from project.db.models.user import Role, UserCreate, UserResponse
-from project.exceptions import EntityNotFoundError, ServiceError, ValidationError
+from project.db.models.task import TaskCreate, TaskStatus
+from project.exceptions import EntityNotFoundError, ServiceError
 from project.security import encrypt_password
 from project.utils.pagination import (
-    PaginatedData,
     PaginationParams,
     calculate_total_pages,
-    has_next_page,
-    has_previous_page,
 )
-
 
 # =============================================================================
 # EXAMPLE TESTS - Study these patterns

@@ -16,11 +16,9 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
-from project.db.models.task import Task
 from project.db.models.user import Role, User
-from project.exceptions import AuthenticationError, EntityNotFoundError
+from project.exceptions import EntityNotFoundError
 from project.security import TokenData, TokenPayload
-from project.utils.pagination import PaginatedData, PaginationParams
 
 
 @pytest.mark.unit
@@ -64,7 +62,7 @@ class TestLevel3:
         # assert: service returns expected result
         assert result.username == "testuser"
         assert result.email == "test@example.com"
-        
+
         # verify session was actually used
         mock_session.execute.assert_called_once()
 
@@ -171,7 +169,7 @@ class TestLevel3:
         # non-admin user should be rejected
         with pytest.raises(HTTPException) as exc_info:
             require_admin(sample_user)
-        
+
         assert exc_info.value.status_code == 403
         assert "Admin" in exc_info.value.detail
 

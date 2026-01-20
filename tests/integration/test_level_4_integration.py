@@ -23,7 +23,6 @@ Run these tests:
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from project.db.models.task import Task, TaskStatus
