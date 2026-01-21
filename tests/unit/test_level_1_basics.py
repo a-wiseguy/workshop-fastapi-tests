@@ -12,7 +12,7 @@ Run these tests:
 
 import pytest
 
-from project.db.models.task import TaskCreate, TaskStatus
+from project.db.models.task import Task, TaskCreate, TaskStatus, TaskResponse
 from project.db.models.user import Role, UserResponse
 from project.exceptions import EntityNotFoundError
 from project.security import encrypt_password, verify_password
@@ -146,20 +146,30 @@ class TestLevel1Exercises:
 
     def test_task_create_with_all_fields(self):
         """Exercise: Test TaskCreate accepts all optional fields.
-        
         Create a TaskCreate with title, description, status=IN_PROGRESS,
         priority=5, and verify all fields are set correctly.
         """
         # YOUR CODE HERE
-        pass
+        task = TaskCreate(title="Test", description="Test", status=TaskStatus.TODO, priority=5)
 
-    def test_task_response_schema_from_task_mock(self, sample_task):
+        assert task.title == "Test"
+        assert task.description == "Test"
+        assert task.status == TaskStatus.TODO
+        assert task.priority == 5
+
+    def test_task_response_schema_from_task_mock(self, sample_task: Task):
         """Exercise: Test TaskResponse.model_validate() with sample_task fixture.
         
         Convert sample_task to TaskResponse and verify fields match.
         """
         # YOUR CODE HERE
-        pass
+        response = TaskResponse.model_validate(sample_task)
+
+        assert response.uuid == sample_task.uuid
+        assert response.title == sample_task.title
+        assert response.description == sample_task.description
+        assert response.status == sample_task.status
+        assert response.priority == sample_task.priority
 
     def test_entity_not_found_without_identifier(self):
         """Exercise: Test EntityNotFoundError with only entity_type.
@@ -168,5 +178,8 @@ class TestLevel1Exercises:
         - message is "Task not found"
         - identifier is None
         """
-        # YOUR CODE HERE
+        error = EntityNotFoundError("Task")
+        
+        assert error.message == "Task not found"
+        assert error.identifier is None
         pass
