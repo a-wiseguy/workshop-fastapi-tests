@@ -7,12 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DEBUG: bool = False
-    
+
     # jwt auth
     SECRET_KEY: str = "dev-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
+
     # database
     DB_TYPE: Literal["sqlite", "postgres"] = "sqlite"
     DB_URL: str = "sqlite:///./app.db"

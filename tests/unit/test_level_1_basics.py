@@ -10,9 +10,11 @@ Run these tests:
     pytest -k level_1 -v
 """
 
+from datetime import datetime
+
 import pytest
 
-from project.db.models.task import TaskCreate, TaskStatus
+from project.db.models.task import TaskCreate, TaskResponse, TaskStatus
 from project.db.models.user import Role, UserResponse
 from project.exceptions import EntityNotFoundError
 from project.security import encrypt_password, verify_password
@@ -23,7 +25,7 @@ from project.security import encrypt_password, verify_password
 class TestLevel1:
     """
     Level 1: Simple Assertion Tests
-    
+
     These 4 tests cover the most common unit testing scenarios in FastAPI apps:
     1. Pydantic schema defaults and required fields
     2. Password hashing security
@@ -37,7 +39,7 @@ class TestLevel1:
     # =========================================================================
     def test_task_create_schema_applies_defaults(self):
         """Test that TaskCreate applies correct defaults for optional fields.
-        
+
         Real-world: Clients often send minimal JSON payloads. Your schema
         must fill in sensible defaults for fields they don't provide.
         """
@@ -58,7 +60,7 @@ class TestLevel1:
     # =========================================================================
     def test_password_encryption_is_secure(self):
         """Test that password encryption produces verifiable, unique hashes.
-        
+
         Real-world: Never store plain passwords. This test verifies:
         - Hash differs from input (encrypted)
         - Same password produces different hashes (salted)
@@ -88,10 +90,10 @@ class TestLevel1:
     # =========================================================================
     def test_response_schema_from_orm_object(self, sample_user):
         """Test UserResponse.model_validate() converts ORM objects correctly.
-        
+
         Real-world: In routers you convert ORM objects to response schemas:
             return UserResponse.model_validate(db_user)
-        
+
         This test verifies from_attributes=True works with your models.
         """
         # sample_user is a Mock with ORM-like attributes
@@ -108,11 +110,11 @@ class TestLevel1:
     # =========================================================================
     def test_entity_not_found_exception_formatting(self):
         """Test EntityNotFoundError formats message with context.
-        
+
         Real-world: When a lookup fails, your error message should identify:
         - What type of entity was not found
         - What identifier was used in the lookup
-        
+
         This helps debugging in logs and API error responses.
         """
         error = EntityNotFoundError("User", "john@example.com")
@@ -140,33 +142,60 @@ class TestLevel1:
 class TestLevel1Exercises:
     """
     Exercises: Apply what you learned above.
-    
+
     Complete these tests following the same patterns.
     """
 
-    def test_task_create_with_all_fields(self):
+    def test_task_create_with_all_fields(self, sample_user):
         """Exercise: Test TaskCreate accepts all optional fields.
-        
+
         Create a TaskCreate with title, description, status=IN_PROGRESS,
         priority=5, and verify all fields are set correctly.
         """
-        # YOUR CODE HERE
-        pass
+        sample_user_uuid = sample_user.uuid
+        due_date = datetime.now()
+        task = TaskCreate(
+            title="Fix login bug",
+            description="Test description",
+            status=TaskStatus.IN_PROGRESS,
+            priority=5,
+            due_date=due_date,
+            assigned_to=sample_user_uuid,
+        )
+
+        # assert all fields are set correctly
+        assert task.title == "Fix login bug"
+        assert task.description == "Test description"
+        assert task.status == TaskStatus.IN_PROGRESS
+        assert task.priority == 5
+        assert task.due_date == due_date
+        assert task.assigned_to == sample_user_uuid
 
     def test_task_response_schema_from_task_mock(self, sample_task):
         """Exercise: Test TaskResponse.model_validate() with sample_task fixture.
-        
+
         Convert sample_task to TaskResponse and verify fields match.
         """
-        # YOUR CODE HERE
-        pass
+        response = TaskResponse.model_validate(sample_task)
+
+        assert response.uuid == sample_task.uuid
+        assert response.title == sample_task.title
+        assert response.description == sample_task.description
+        assert response.status == sample_task.status
+        assert response.priority == sample_task.priority
+        assert response.due_date == sample_task.due_date
+        assert response.created_at == sample_task.created_at
+        assert response.created_by == sample_task.created_by
+        assert response.assigned_to == sample_task.assigned_to
 
     def test_entity_not_found_without_identifier(self):
         """Exercise: Test EntityNotFoundError with only entity_type.
-        
+
         Create error with just "Task" (no identifier) and verify:
         - message is "Task not found"
         - identifier is None
         """
-        # YOUR CODE HERE
-        pass
+        error = EntityNotFoundError("Task")
+
+        assert error.message == "Task not found"
+        assert error.identifier is None
