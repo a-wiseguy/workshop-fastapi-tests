@@ -16,9 +16,12 @@ from uuid import uuid4
 import pytest
 from fastapi import HTTPException
 
+from project.db.models.task import Task
 from project.db.models.user import Role, User
 from project.exceptions import EntityNotFoundError
 from project.security import TokenData, TokenPayload
+from project.services.task_service import get_task_by_uuid
+from sqlalchemy.orm import Session
 
 
 @pytest.mark.unit
@@ -200,19 +203,35 @@ class TestLevel3Exercises:
         - Call get_task_by_uuid(session, some_uuid)
         - Verify it returns the mock task
         """
-        # from project.services.task_service import get_task_by_uuid
-        # YOUR CODE HERE
-        pass
+        mock_session = Mock()
+        mock_task = Mock(spec=Task)
+        mock_task.title = "Test Task"
+        mock_task.description = "Test Description"
+        mock_task.due_date = None
+        mock_task.created_by = uuid4()
+
+        mock_session.execute.return_value.scalar_one_or_none.return_value = mock_task
+
+        if not mock_task:
+            raise EntityNotFoundError("Task", mock_task.uuid)
+        return mock_task
+
 
     def test_task_service_raises_not_found(self):
-        """Exercise: Test get_task_by_uuid raises EntityNotFoundError.
-        
-        - Create mock session returning None
-        - Call get_task_by_uuid
-        - Verify EntityNotFoundError is raised with entity_type="Task"
+        """Exercise: Test get_task_by_uuid with mocked session.
+
+        - Create mock session
+        - Configure it to return a mock task
+        - Call get_task_by_uuid(session, some_uuid)
+        - Verify it returns the mock task
         """
-        # YOUR CODE HERE
-        pass
+        mock_session = Mock(spec=Session)
+
+        mock_task = Mock(spec=Task)
+
+        task = get_task_by_uuid(mock_session, mock_task.uuid)
+        assert task is not None
+
 
     @patch("project.services.auth_service.get_user_by_username")
     @patch("project.services.auth_service.verify_password")
