@@ -13,6 +13,8 @@ Run these tests:
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
+from project.db.models.task import Task
+from project.services.task_service import get_task_by_uuid
 import pytest
 from fastapi import HTTPException
 
@@ -26,7 +28,7 @@ from project.security import TokenData, TokenPayload
 class TestLevel3:
     """
     Level 3: Mocking and Patching
-    
+
     These 5 tests cover essential mocking patterns for FastAPI apps:
     1. Mock DB session to test services without database
     2. Service raises exception when entity not found
@@ -41,7 +43,7 @@ class TestLevel3:
     # =========================================================================
     def test_service_with_mocked_session(self):
         """Test service function using mocked SQLAlchemy session.
-        
+
         Real-world: You want to test your service logic (query building,
         result processing) without spinning up a test database.
         """
@@ -72,7 +74,7 @@ class TestLevel3:
     # =========================================================================
     def test_service_raises_when_entity_not_found(self):
         """Test that service raises EntityNotFoundError when lookup fails.
-        
+
         Real-world: When session.scalar_one_or_none() returns None,
         your service should raise EntityNotFoundError, not return None.
         """
@@ -96,7 +98,7 @@ class TestLevel3:
     @patch("project.security.get_settings")
     def test_token_creation_with_patched_settings(self, mock_get_settings):
         """Test token creation using patched settings.
-        
+
         Real-world: Test that your auth code correctly uses settings
         like SECRET_KEY and ALGORITHM without requiring .env file.
         """
@@ -131,7 +133,7 @@ class TestLevel3:
     @patch("project.dependencies.get_user_by_username")
     def test_get_current_user_dependency(self, mock_get_user, mock_decode):
         """Test get_current_user dependency with mocked token decode.
-        
+
         Real-world: Test that your auth dependency correctly:
         - Decodes the JWT token
         - Looks up the user from decoded username
@@ -160,7 +162,7 @@ class TestLevel3:
     # =========================================================================
     def test_require_admin_access_control(self, sample_user, admin_user):
         """Test require_admin dependency enforces admin role.
-        
+
         Real-world: Admin-only endpoints must reject regular users
         with HTTP 403, but allow admin users through.
         """
@@ -188,42 +190,59 @@ class TestLevel3:
 class TestLevel3Exercises:
     """
     Exercises: Apply what you learned above.
-    
+
     Complete these tests following the same patterns.
     """
 
     def test_task_service_with_mocked_session(self):
         """Exercise: Test get_task_by_uuid with mocked session.
-        
+
         - Create mock session
         - Configure it to return a mock task
         - Call get_task_by_uuid(session, some_uuid)
         - Verify it returns the mock task
         """
-        # from project.services.task_service import get_task_by_uuid
-        # YOUR CODE HERE
-        pass
+        mock_task = Mock(spec=Task)
+        mock_task.title = "test"
+        mock_task.description = "testTask"
+        mock_session = Mock()
+
+        mock_session.execute.return_value.scalar_one_or_none.return_value = mock_task
+
+        result = get_task_by_uuid(mock_session, mock_task.uuid)
+
+        assert result.title == "test"
+        assert result.description == "testTask"
+
+        mock_session.execute.assert_called_once()
 
     def test_task_service_raises_not_found(self):
         """Exercise: Test get_task_by_uuid raises EntityNotFoundError.
-        
+
         - Create mock session returning None
         - Call get_task_by_uuid
         - Verify EntityNotFoundError is raised with entity_type="Task"
         """
-        # YOUR CODE HERE
-        pass
+
+        mock_session = Mock()
+        mock_session.execute.return_value.scalar_one_or_none.return_value = None
+
+        with pytest.raises(EntityNotFoundError) as exc_info:
+            get_task_by_uuid(mock_session, "NotATask")
+
+        assert exc_info.value.entity_type == "Task"
+        assert exc_info.value.identifier == "NotATask"
 
     @patch("project.services.auth_service.get_user_by_username")
     @patch("project.services.auth_service.verify_password")
     def test_authenticate_user_with_mocks(self, mock_verify, mock_get_user):
         """Exercise: Test authenticate_user with mocked dependencies.
-        
+
         - mock_get_user returns a mock user
         - mock_verify returns True (password matches)
         - Call authenticate_user(session, "user", "pass")
         - Verify it returns the mock user
-        
+
         Then test the failure case:
         - mock_verify returns False
         - Verify AuthenticationError is raised
