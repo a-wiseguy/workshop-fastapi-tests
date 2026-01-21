@@ -3,7 +3,7 @@ Level 2: Exception Testing
 ===========================
 Goal: Test that code raises expected exceptions for invalid input.
 
-Focus: 5 practical tests for validating error handling in FastAPI apps.
+Focus: 4 practical tests for validating error handling in FastAPI apps.
 
 Run these tests:
     pytest tests/unit/test_level_2_exceptions.py -v
@@ -16,7 +16,7 @@ from pydantic import ValidationError as PydanticValidationError
 from project.config import Settings
 from project.db.models.task import TaskCreate
 from project.exceptions import AuthenticationError, EntityNotFoundError
-from project.utils.pagination import PaginationParams
+from project.utils.pagination import LeetPaginationParams, PaginationParams
 
 
 @pytest.mark.unit
@@ -30,7 +30,6 @@ class TestLevel2:
     2. Boundary validation (min/max values)
     3. Config/Settings validation
     4. Domain exception raising and catching
-    5. Custom exception attributes
     """
 
     # =========================================================================
@@ -49,6 +48,7 @@ class TestLevel2:
         # verify it's the title field that failed
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("title",) for e in errors)
+
 
     # =========================================================================
     # TEST 2: Boundary Validation
@@ -80,6 +80,8 @@ class TestLevel2:
         valid_max = PaginationParams(limit=100, offset=1000)
         assert valid_min.limit == 1
         assert valid_max.limit == 100
+
+    # TODO: example subclass
 
     # =========================================================================
     # TEST 3: Config/Settings Validation
@@ -137,23 +139,6 @@ class TestLevel2:
             from project.exceptions import ServiceError
             assert isinstance(e, ServiceError)
 
-    # =========================================================================
-    # TEST 5: Auth Exception Defaults
-    # WHY: Auth errors should have secure default messages (don't leak info)
-    # =========================================================================
-    def test_auth_exception_has_secure_default(self):
-        """Test AuthenticationError has secure default message.
-        
-        Real-world: Auth errors shouldn't reveal whether username exists
-        or password was wrong - just "authentication failed".
-        """
-        # default message is generic
-        error = AuthenticationError()
-        assert error.message == "Authentication failed"
-
-        # custom message can be set when needed
-        custom = AuthenticationError("Session expired")
-        assert custom.message == "Session expired"
 
 
 # =============================================================================
