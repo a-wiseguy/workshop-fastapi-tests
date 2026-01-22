@@ -2,6 +2,13 @@
 
 A demo FastAPI application designed for learning pytest unit testing patterns.
 
+# Contributions
+
+- 👑 [jordodo](https://github.com/jordodo) 👑
+- [maxnoon](https://github.com/maxnoon)
+- [TijmenvandenBan](https://github.com/TijmenvandenBan)
+- [P97Danny](https://github.com/P97Danny)
+
 ## Quick Start
 
 ```bash
