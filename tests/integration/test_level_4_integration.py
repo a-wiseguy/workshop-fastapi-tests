@@ -25,7 +25,7 @@ from uuid import uuid4
 import pytest
 from sqlalchemy.orm import Session
 
-from project.db.models.task import Task, TaskStatus
+from project.db.models.task import Task, TaskStatus, TaskUpdate, TaskCreate
 from project.db.models.user import Role, User
 from project.exceptions import EntityNotFoundError
 from project.security import encrypt_password
@@ -173,11 +173,11 @@ class TestLevel4:
 
         # create tasks with different statuses and assignments
         tasks_data = [
-            ("Task A", TaskStatus.TODO, user1.uuid, user1.uuid),      # todo, assigned to user1
-            ("Task B", TaskStatus.TODO, user1.uuid, user2.uuid),      # todo, assigned to user2
+            ("Task A", TaskStatus.TODO, user1.uuid, user1.uuid),  # todo, assigned to user1
+            ("Task B", TaskStatus.TODO, user1.uuid, user2.uuid),  # todo, assigned to user2
             ("Task C", TaskStatus.IN_PROGRESS, user1.uuid, user1.uuid),  # in_progress, assigned to user1
-            ("Task D", TaskStatus.DONE, user1.uuid, None),            # done, unassigned
-            ("Task E", TaskStatus.TODO, user1.uuid, None),            # todo, unassigned
+            ("Task D", TaskStatus.DONE, user1.uuid, None),  # done, unassigned
+            ("Task E", TaskStatus.TODO, user1.uuid, None),  # todo, unassigned
         ]
 
         for title, status, created_by, assigned_to in tasks_data:
@@ -194,9 +194,7 @@ class TestLevel4:
 
         # act: filter by status=TODO
         pagination = PaginationParams(limit=10, offset=0)
-        todo_tasks = task_service.get_tasks(
-            db_session, pagination, status_filter=TaskStatus.TODO
-        )
+        todo_tasks = task_service.get_tasks(db_session, pagination, status_filter=TaskStatus.TODO)
 
         # assert: only TODO tasks returned
         assert todo_tasks.total == 3  # Task A, B, E
@@ -204,9 +202,7 @@ class TestLevel4:
             assert task.status == TaskStatus.TODO.value
 
         # act: filter by assigned_to=user1
-        user1_tasks = task_service.get_tasks(
-            db_session, pagination, assigned_to=user1.uuid
-        )
+        user1_tasks = task_service.get_tasks(db_session, pagination, assigned_to=user1.uuid)
 
         # assert: only user1's tasks
         assert user1_tasks.total == 2  # Task A, C
@@ -215,7 +211,8 @@ class TestLevel4:
 
         # act: combine filters
         user1_todo = task_service.get_tasks(
-            db_session, pagination,
+            db_session,
+            pagination,
             status_filter=TaskStatus.TODO,
             assigned_to=user1.uuid,
         )
@@ -320,15 +317,47 @@ class TestLevel4Exercises:
     Complete these tests following the same patterns.
     """
 
-    def test_get_users_returns_all_active_users(self, db_session: Session):
+    def test_get_users_returns_all_active_users(self, db_session: Session) -> None:
         """Exercise: Test user listing with active filter.
 
         - Create 3 users (one should be manually set as archived if you add that field)
         - Call get_all_users(db_session)
         - Verify all created users are returned
         """
-        # YOUR CODE HERE
-        pass
+        from project.db.models.user import UserCreate
+
+        # act: create user through service
+        user_data_1 = UserCreate(
+            username="newuser1",
+            email="newuser1@example.com",
+            password="password123",
+            role=Role.USER,
+        )
+        user_data_2 = UserCreate(
+            username="newuser2",
+            email="newuser2@example.com",
+            password="password123",
+            role=Role.USER,
+        )
+        user_data_3_archived = UserCreate(
+            username="newuser3",
+            email="newuser3@example.com",
+            password="password123",
+            role=Role.USER,
+        )
+        created_1 = user_service.create_user(db_session, user_data_1)
+        created_2 = user_service.create_user(db_session, user_data_2)
+        created_3 = user_service.create_user(db_session, user_data_3_archived)
+
+        users = user_service.get_all_users(db_session)
+
+        assert len(users) >= 3
+
+        # assert: user is in database with correct data
+        user_uuids = {user.uuid for user in users}
+        assert created_1.uuid in user_uuids
+        assert created_2.uuid in user_uuids
+        assert created_3.uuid in user_uuids
 
     def test_task_update_preserves_unset_fields(self, db_session: Session, created_task: Task):
         """Exercise: Test partial update doesn't overwrite unset fields.
@@ -337,15 +366,52 @@ class TestLevel4Exercises:
         - Update only the status using TaskUpdate(status=TaskStatus.DONE)
         - Verify title and description are unchanged
         """
-        # YOUR CODE HERE
-        pass
+        created_task_title = created_task.title
+        created_task_description = created_task.description
+        created_task_uuid = created_task.uuid
 
-    def test_pagination_empty_results(self, db_session: Session):
+        update_data = TaskUpdate(
+            status=TaskStatus.DONE,
+        )
+
+        updated_task = task_service.update_task(db_session, created_task_uuid, update_data)
+
+        assert updated_task.title == created_task_title
+        assert updated_task.description == created_task_description
+        assert updated_task.status == TaskStatus.DONE.value
+
+    def test_pagination_empty_results(self, db_session: Session, created_user: User):
         """Exercise: Test pagination with offset beyond available data.
 
         - Create 3 tasks
         - Request page with offset=100, limit=10
         - Verify total is 3 but results list is empty
         """
-        # YOUR CODE HERE
-        pass
+        # CREATE
+        task_data_1 = TaskCreate(
+            title="Lifecycle Test Task 1",
+            description="Testing full lifecycle",
+            status=TaskStatus.TODO,
+            priority=2,
+        )
+        task_data_2 = TaskCreate(
+            title="Lifecycle Test Task 2",
+            description="Testing full lifecycle",
+            status=TaskStatus.TODO,
+            priority=2,
+        )
+        task_data_3 = TaskCreate(
+            title="Lifecycle Test Task 3",
+            description="Testing full lifecycle",
+            status=TaskStatus.TODO,
+            priority=2,
+        )
+
+        task_service.create_task(db_session, task_data_1, created_user)
+        task_service.create_task(db_session, task_data_2, created_user)
+        task_service.create_task(db_session, task_data_3, created_user)
+
+        pagination = PaginationParams(limit=10, offset=100)
+        result = task_service.get_tasks(db_session, pagination)
+        assert result.total == 3
+        assert len(result.results) == 0

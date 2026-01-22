@@ -24,7 +24,7 @@ from project.utils.pagination import PaginationParams
 class TestLevel2:
     """
     Level 2: Exception Testing
-    
+
     These 5 tests cover essential exception testing patterns:
     1. Pydantic validation rejects invalid input
     2. Boundary validation (min/max values)
@@ -38,7 +38,7 @@ class TestLevel2:
     # =========================================================================
     def test_task_create_rejects_empty_title(self):
         """Test that TaskCreate raises ValidationError for empty title.
-        
+
         Real-world: Clients might send {"title": ""} which should fail
         validation, not create a task with empty title.
         """
@@ -49,14 +49,13 @@ class TestLevel2:
         errors = exc_info.value.errors()
         assert any(e["loc"] == ("title",) for e in errors)
 
-
     # =========================================================================
     # TEST 2: Boundary Validation
     # WHY: Test edge cases - what values are just inside/outside valid range
     # =========================================================================
     def test_pagination_boundary_validation(self):
         """Test pagination params enforce min/max boundaries.
-        
+
         Real-world: Clients might request limit=0, limit=9999, or offset=-1.
         Your API needs to reject these before hitting the database.
         """
@@ -89,7 +88,7 @@ class TestLevel2:
     # =========================================================================
     def test_settings_rejects_invalid_config(self):
         """Test Settings validation catches config errors at startup.
-        
+
         Real-world: If DB_URL is empty or token expiry is negative,
         the app should fail immediately, not when first user logs in.
         """
@@ -116,10 +115,11 @@ class TestLevel2:
     # =========================================================================
     def test_service_function_raises_domain_exception(self):
         """Test that domain exceptions can be raised and caught correctly.
-        
+
         Real-world: Your services raise EntityNotFoundError, your routers
         catch it and return HTTP 404. This pattern must work.
         """
+
         def lookup_task(task_id: str):
             # simulate service that doesn't find the entity
             raise EntityNotFoundError("Task", task_id)
@@ -137,8 +137,8 @@ class TestLevel2:
             lookup_task("another-uuid")
         except Exception as e:
             from project.exceptions import ServiceError
-            assert isinstance(e, ServiceError)
 
+            assert isinstance(e, ServiceError)
 
 
 # =============================================================================
@@ -151,38 +151,54 @@ class TestLevel2:
 class TestLevel2Exercises:
     """
     Exercises: Apply what you learned above.
-    
+
     Complete these tests following the same patterns.
     """
 
     def test_task_priority_boundaries(self):
         """Exercise: Test TaskCreate priority must be 1-5.
-        
+
         - priority=0 should raise PydanticValidationError
         - priority=6 should raise PydanticValidationError
         - priority=1 and priority=5 should work (boundary values)
         """
-        # YOUR CODE HERE
-        pass
+        with pytest.raises(PydanticValidationError):
+            TaskCreate(title="Test", priority=0)
+
+        with pytest.raises(PydanticValidationError):
+            TaskCreate(title="Test", priority=6)
+
+        task_prio_1 = TaskCreate(title="Test", priority=1)
+        task_prio_5 = TaskCreate(title="Test", priority=5)
+
+        assert task_prio_1.title == "Test"
+        assert task_prio_1.priority == 1
+        assert task_prio_5.title == "Test"
+        assert task_prio_5.priority == 5
 
     def test_task_title_max_length(self):
         """Exercise: Test TaskCreate title max length is 200 chars.
-        
+
         - title with 201 chars should raise PydanticValidationError
         - title with exactly 200 chars should work
-        
+
         Hint: "x" * 201 creates a string of 201 x's
         """
-        # YOUR CODE HERE
-        pass
+        with pytest.raises(PydanticValidationError):
+            TaskCreate(title="A" * 201)
+
+        task = TaskCreate(title="B" * 200)
+        assert task.title == "B" * 200
 
     def test_exception_context_contains_details(self):
         """Exercise: Test that exception context dict has useful info.
-        
+
         Create an EntityNotFoundError("User", "test@example.com") and verify:
         - error.context is a dict
         - error.context["entity_type"] == "User"
         - error.context["identifier"] == "test@example.com"
         """
-        # YOUR CODE HERE
-        pass
+        error = EntityNotFoundError("User", "test@example.com")
+        assert isinstance(error.context, dict)
+        assert error.context["entity_type"] == "User"
+        assert error.context["identifier"] == "test@example.com"
